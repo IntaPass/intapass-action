@@ -5,66 +5,71 @@ const fs = require('fs');
 const path = require('path');
 
 const languageMap = {
-    '.py': 'Python',
-    '.js': 'JavaScript',
-    '.java': 'Java',
-    '.cpp': 'C++',
-    '.cs': 'C#',
-    '.rb': 'Ruby',
-    '.php': 'PHP',
-    '.swift': 'Swift',
-    '.go': 'Go',
-    '.ts': 'TypeScript',
-    '.yml': 'Yalm',
-    '.yaml': 'Yalm',
+  '.py': 'Python',
+  '.js': 'JavaScript',
+  '.java': 'Java',
+  '.cpp': 'C++',
+  '.cs': 'C#',
+  '.rb': 'Ruby',
+  '.php': 'PHP',
+  '.swift': 'Swift',
+  '.go': 'Go',
+  '.ts': 'TypeScript',
+  '.yml': 'Yalm',
+  '.yaml': 'Yalm',
 };
 
-  function determineLanguage(filename) {
-    // Extract the file extension
-    const extension = filename.slice(filename.lastIndexOf('.'));
-    
-    // Lookup the language in the map
-    const language = languageMap[extension];
-    
-    // Return the language or a default message
-    return language ? language : 'Unknown language';
-  }
+function determineLanguage(filename) {
+  // Extract the file extension
+  const extension = filename.slice(filename.lastIndexOf('.'));
 
-function request_review(codeData, lang, callback) {
-    axios.post("https://backend-dev.portanex.com/review", {code: codeData, lang:lang}, {headers: {ContentType: "application/json"}})
-    .then((resp)=>{
-        return callback(resp.data)
-    })
-    .catch((err)=>{
-        console.log(err)
-    })
+  // Lookup the language in the map
+  const language = languageMap[extension];
+
+  // Return the language or a default message
+  return language ? language : 'Unknown language';
+}
+
+function requestReview(codeData, lang) {
+  const url = "https://backend-dev.portanex.com/review";
+  const payload = { code: codeData, lang: lang };
+  const config = { headers: { ContentType: "application/json" } };
+  return axios.post(url, payload, config)
 }
 
 try {
-  // `who-to-greet` input defined in action metadata file
+  function processFile(files) {
+    let results = []
+    return new Promise((resolve, reject) => {
+      for (let fileItem = 0; fileItem < files.length; fileItem++) {
+        let lang = determineLanguage(files[fileItem])
+        const filePath = path.join(__dirname, '..', files[fileItem]);
+        fs.readFile(filePath, 'utf8', (err, data) => {
+          if (err) {
+            console.error('Error reading the file:', err);
+            return reject(err);
+          }
+
+          requestReview(data, lang)
+            .then((resp) => {
+              results.push(resp.data)
+            })
+            .catch((err) => {
+              return reject(err)
+            })
+        });
+
+        console.log(`Files: ${fileItem}`)
+      }
+      return resolve(results)
+    })
+  }
+
   const files = JSON.parse(core.getInput('files'));
   console.log(`Changed files ${files}!`);
-
-  let results = []
-  for (let fileItem = 0; fileItem <files.length; fileItem++){
-    let lang = determineLanguage(files[fileItem])
-    const filePath = path.join(__dirname, '..', files[fileItem]);
-    fs.readFile(filePath, 'utf8', (err, data) => {
-        if (err) {
-          console.error('Error reading the file:', err);
-          return;
-        }
-        console.log('File content:', );
-        request_review(data, lang, function(data){
-            if (data) {
-                results.push(data)
-            }
-        })
-      });
-    
-    console.log(`Files: ${fileItem}`)
-  }
-  core.setOutput("results", results);
+  processFile(files)
+    .then((results) => { core.setOutput("results", results) })
+    .catch((err) => { throw err })
 } catch (error) {
   core.setFailed(error.message);
 }

@@ -37609,12 +37609,12 @@ function requestReview(codeData, lang) {
 async function processFile(files) {
   let promises = files.map(async (fileItem) => {
     const lang = determineLanguage(fileItem);
-    const filePath = path.join(__dirname, '..', fileItem);
+    const filePath = path.join(process.env.GITHUB_WORKSPACE, fileItem);
 
     try {
       const data = await fs.readFile(filePath, 'utf8');
       const resp = await requestReview(data, lang);
-      return JSON.stringify(resp.data); // Convert response to string and return
+      return JSON.stringify({file: fileItem, resp: resp.data}); // Convert response to string and return
     } catch (err) {
       console.error('Error processing file:', err);
       throw err; // Rethrow to be caught by Promise.all

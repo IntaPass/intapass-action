@@ -14,7 +14,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
       - name: Code review
         id: review_code
-        uses: intapass/intapass-action@0.1.1
+        uses: intapass/intapass-action@0.1.2
         with:
           files: ${{ steps.files.outputs.all }}
       - name: Get the review results

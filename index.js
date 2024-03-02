@@ -35,7 +35,7 @@ function requestReview(codeData, lang) {
 async function processFile(files) {
   let promises = files.map(async (fileItem) => {
     const lang = determineLanguage(fileItem);
-    const filePath = path.join(__dirname, '..', fileItem);
+    const filePath = path.join(process.env.GITHUB_WORKSPACE, fileItem);
 
     try {
       const data = await fs.readFile(filePath, 'utf8');

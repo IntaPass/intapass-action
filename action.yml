@@ -3,10 +3,9 @@ description: 'AI code review solution that helps you write better software'
 label: 'award'
 color: 'black'
 inputs:
-  review_code:  # id of input
-    description: 'Code Review'
+  files:  # id of input
+    description: 'Files to review'
     required: true
-    default: 'Yes'
 outputs:
   results: # id of output
     description: 'Here is the result of your output'

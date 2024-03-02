@@ -7,4 +7,4 @@ for (let i=0; i < files.length; i++) {
     console.log(`Extension: ${extension}`)
 }
 
-console.log(files)
+console.log(`files: ${files}`)

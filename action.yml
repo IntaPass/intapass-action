@@ -1,0 +1,13 @@
+name: 'IntaPass Action'
+description: 'AI code review solution that helps you write better software'
+inputs:
+  review_code:  # id of input
+    description: 'Code Review'
+    required: true
+    default: 'Yes'
+outputs:
+  time: # id of output
+    description: 'Here is the result of your output'
+runs:
+  using: 'node20'
+  main: 'index.js'

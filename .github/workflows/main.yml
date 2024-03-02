@@ -13,10 +13,9 @@ jobs:
         uses: lots0logs/gh-action-get-changed-files@2.2.2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          format: 'json'
       - name: Code review
         id: review_code
-        uses: intapass/intapass-action@0.0.1
+        uses: intapass/intapass-action@0.0.2
         with:
           files: ${{ steps.files.outputs.added_modified }}
       - name: Get the review results

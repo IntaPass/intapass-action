@@ -17,6 +17,6 @@ jobs:
         id: review_code
         uses: intapass/intapass-action@0.0.3
         with:
-          files: ${{ steps.files.outputs.added_modified }}
+          files: ${{ steps.files.outputs.all }}
       - name: Get the review results
         run: echo "Results ${{ steps.review_code.outputs.results }}"

@@ -37575,9 +37575,37 @@ var __webpack_exports__ = {};
 const core = __nccwpck_require__(4430);
 const github = __nccwpck_require__(3039);
 const axios = __nccwpck_require__(5162)
+const fs = __nccwpck_require__(7147);
+const path = __nccwpck_require__(1017);
 
-function request_review(codeData) {
-    axios.post("url", {code: codeData, lang:"python"}, {headers: {ContentType: "application/json"}})
+const languageMap = {
+    '.py': 'Python',
+    '.js': 'JavaScript',
+    '.java': 'Java',
+    '.cpp': 'C++',
+    '.cs': 'C#',
+    '.rb': 'Ruby',
+    '.php': 'PHP',
+    '.swift': 'Swift',
+    '.go': 'Go',
+    '.ts': 'TypeScript',
+    '.yml': 'Yalm',
+    '.yaml': 'Yalm',
+};
+
+  function determineLanguage(filename) {
+    // Extract the file extension
+    const extension = filename.slice(filename.lastIndexOf('.'));
+    
+    // Lookup the language in the map
+    const language = languageMap[extension];
+    
+    // Return the language or a default message
+    return language ? language : 'Unknown language';
+  }
+
+function request_review(codeData, lang) {
+    axios.post("https://backend-dev.portanex.com/review", {code: codeData, lang:lang}, {headers: {ContentType: "application/json"}})
     .then((resp)=>{
         return resp.data
     })
@@ -37588,20 +37616,24 @@ function request_review(codeData) {
 
 try {
   // `who-to-greet` input defined in action metadata file
-  const files = core.getInput('files');
+  const files = JSON.parse(core.getInput('files'));
   console.log(`Changed files ${files}!`);
 
+  let results = []
   for (let fileItem = 0; fileItem <files.length; fileItem++){
+    let lang = determineLanguage(files[fileItem].split)
+    fs.readFile(filePath, 'utf8', (err, data) => {
+        if (err) {
+          console.error('Error reading the file:', err);
+          return;
+        }
+        console.log('File content:', );
+        results.push(request_review(data, lang))
+      });
+    
     console.log(`Files: ${fileItem}`)
   }
-
-//   request_review(files[0])
-  
-//   const results = (new Date()).toTimeString();
-  core.setOutput("results", "results");
-  // Get the JSON webhook payload for the event that triggered the workflow
-//   const payload = JSON.stringify(github.context.payload, undefined, 2)
-//   console.log(`The event payload: ${payload}`);
+  core.setOutput("results", results);
 } catch (error) {
   core.setFailed(error.message);
 }

@@ -12,6 +12,7 @@ jobs:
         id: files
         uses: lots0logs/gh-action-get-changed-files@2.2.2
         with:
+          token: ${{ secrets.GITHUB_TOKEN }}
           format: 'json'
       - name: Code review
         id: review_code

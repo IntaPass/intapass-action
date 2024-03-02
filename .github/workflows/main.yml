@@ -7,7 +7,7 @@ jobs:
     steps:
       - name: Code review
         id: review_code
-        uses: intapass/intapass-actionn@v1.0.0
+        uses: intapass/intapass-action@v1.0.0
         with:
           review_code: 'Yes'
       - name: Get the review results

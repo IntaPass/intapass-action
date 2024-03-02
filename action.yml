@@ -6,8 +6,8 @@ inputs:
     required: true
     default: 'Yes'
 outputs:
-  time: # id of output
+  results: # id of output
     description: 'Here is the result of your output'
 runs:
   using: 'node20'
-  main: 'index.js'
+  main: 'dist/index.js'

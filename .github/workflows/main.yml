@@ -5,10 +5,18 @@ jobs:
     runs-on: ubuntu-latest
     name: Review code and advise on best practices
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Get changed files
+        id: files
+        uses: lots0logs/gh-action-get-changed-files@v2.2.2
+        with:
+          format: 'json'
       - name: Code review
         id: review_code
-        uses: intapass/intapass-action@alpha
+        uses: intapass/intapass-action@0.0.1
         with:
-          review_code: 'Yes'
+          files: ${{ steps.files.outputs.added_modified }}
       - name: Get the review results
-        run: echo "The time was ${{ steps.code_review_job.outputs.results }}"
+        run: echo "Results ${{ steps.review_code.outputs.results }}"

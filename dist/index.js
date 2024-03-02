@@ -37604,10 +37604,10 @@ const languageMap = {
     return language ? language : 'Unknown language';
   }
 
-function request_review(codeData, lang) {
+function request_review(codeData, lang, callback) {
     axios.post("https://backend-dev.portanex.com/review", {code: codeData, lang:lang}, {headers: {ContentType: "application/json"}})
     .then((resp)=>{
-        return resp.data
+        return callback(resp.data)
     })
     .catch((err)=>{
         console.log(err)
@@ -37629,7 +37629,11 @@ try {
           return;
         }
         console.log('File content:', );
-        results.push(request_review(data, lang))
+        request_review(data, lang, function(data){
+            if (data) {
+                results.push(data)
+            }
+        })
       });
     
     console.log(`Files: ${fileItem}`)

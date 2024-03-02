@@ -1,3 +1,5 @@
+use strict;
+
 let files = JSON.parse('[".github/workflows/main.yml"]')
 for (let i=0; i < files.length; i++) {
     console.log(i)

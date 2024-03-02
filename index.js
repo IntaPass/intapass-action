@@ -39,8 +39,8 @@ function requestReview(codeData, lang) {
 
 try {
   function processFile(files) {
-    let results = []
     return new Promise((resolve, reject) => {
+      let results = []
       for (let fileItem = 0; fileItem < files.length; fileItem++) {
         let lang = determineLanguage(files[fileItem])
         const filePath = path.join(__dirname, '..', files[fileItem]);
@@ -52,7 +52,7 @@ try {
 
           requestReview(data, lang)
             .then((resp) => {
-              results.push(resp.data)
+              results.push(JSON.stringify(resp.data))
             })
             .catch((err) => {
               return reject(err)
@@ -61,15 +61,23 @@ try {
 
         console.log(`Files: ${fileItem}`)
       }
+      console.log("results", results)
       return resolve(results)
     })
   }
 
-  const files = JSON.parse(core.getInput('files'));
+  // const files = JSON.parse(core.getInput('files'));
+  let files = JSON.parse('["./intapass-action/test.js"]')
   console.log(`Changed files ${files}!`);
-  processFile(files)
-    .then((results) => { core.setOutput("results", results) })
-    .catch((err) => { throw err })
+
+  async function abccall(){
+    let results =  await processFile(files)
+    core.setOutput("results", results)
+  }
+  abccall()
+  
+    // .then((results) => { core.setOutput("results", results) })
+    // .catch((err) => { throw err })
 } catch (error) {
   core.setFailed(error.message);
 }

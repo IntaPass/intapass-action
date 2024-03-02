@@ -6,5 +6,3 @@ for (let i=0; i < files.length; i++) {
     let extension = filename.slice(filename.lastIndexOf('.'))
     console.log(`Extension: ${extension}`)
 }
-
-console.log(`T: files: ${files}`)

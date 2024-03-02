@@ -37574,8 +37574,8 @@ var __webpack_exports__ = {};
 (() => {
 const core = __nccwpck_require__(4430);
 const github = __nccwpck_require__(3039);
-const axios = __nccwpck_require__(5162)
-const fs = __nccwpck_require__(7147);
+const axios = __nccwpck_require__(5162);
+const fs = (__nccwpck_require__(7147).promises); // Use fs promises for easier async handling
 const path = __nccwpck_require__(1017);
 
 const languageMap = {
@@ -37594,13 +37594,8 @@ const languageMap = {
 };
 
 function determineLanguage(filename) {
-  // Extract the file extension
   const extension = filename.slice(filename.lastIndexOf('.'));
-
-  // Lookup the language in the map
   const language = languageMap[extension];
-
-  // Return the language or a default message
   return language ? language : 'Unknown language';
 }
 
@@ -37608,45 +37603,37 @@ function requestReview(codeData, lang) {
   const url = "https://backend-dev.portanex.com/review";
   const payload = { code: codeData, lang: lang };
   const config = { headers: { ContentType: "application/json" } };
-  return axios.post(url, payload, config)
+  return axios.post(url, payload, config);
 }
 
-try {
-  function processFile(files) {
-    let results = []
-    return new Promise((resolve, reject) => {
-      for (let fileItem = 0; fileItem < files.length; fileItem++) {
-        let lang = determineLanguage(files[fileItem])
-        const filePath = path.join(__dirname, '..', files[fileItem]);
-        fs.readFile(filePath, 'utf8', (err, data) => {
-          if (err) {
-            console.error('Error reading the file:', err);
-            return reject(err);
-          }
+async function processFile(files) {
+  let promises = files.map(async (fileItem) => {
+    const lang = determineLanguage(fileItem);
+    const filePath = path.join(__dirname, '..', fileItem);
 
-          requestReview(data, lang)
-            .then((resp) => {
-              results.push(resp.data)
-            })
-            .catch((err) => {
-              return reject(err)
-            })
-        });
+    try {
+      const data = await fs.readFile(filePath, 'utf8');
+      const resp = await requestReview(data, lang);
+      return JSON.stringify(resp.data); // Convert response to string and return
+    } catch (err) {
+      console.error('Error processing file:', err);
+      throw err; // Rethrow to be caught by Promise.all
+    }
+  });
 
-        console.log(`Files: ${fileItem}`)
-      }
-      return resolve(results)
-    })
-  }
-
-  const files = JSON.parse(core.getInput('files'));
-  console.log(`Changed files ${files}!`);
-  processFile(files)
-    .then((results) => { core.setOutput("results", results) })
-    .catch((err) => { throw err })
-} catch (error) {
-  core.setFailed(error.message);
+  // Wait for all promises to resolve
+  return Promise.all(promises);
 }
+
+const files = JSON.parse(core.getInput('files'));
+processFile(files)
+  .then(results => {
+    core.setOutput("results", results);
+  })
+  .catch(error => {
+    console.error("Failed to process files:", error);
+    core.setFailed(error.message);
+  });
 
 })();
 

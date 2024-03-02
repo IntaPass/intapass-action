@@ -47,7 +47,7 @@ try {
 
   let results = []
   for (let fileItem = 0; fileItem <files.length; fileItem++){
-    let lang = determineLanguage(files[fileItem].split)
+    let lang = determineLanguage(files[fileItem])
     fs.readFile(filePath, 'utf8', (err, data) => {
         if (err) {
           console.error('Error reading the file:', err);

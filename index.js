@@ -3,7 +3,7 @@ const github = require('@actions/github');
 const axios = require('axios');
 const fs = require('fs').promises; // Use fs promises for easier async handling
 const path = require('path');
-const json2md = require("json2md")
+import { jsonToPlainText } from "json-to-plain-text";
 
 const languageMap = {
   '.py': 'Python',
@@ -61,7 +61,7 @@ async function processFile(files) {
 const files = JSON.parse(core.getInput('files'));
 processFile(files)
   .then(results => {
-    core.setOutput("results", json2md(results));
+    core.setOutput("results", jsonToPlainText(results));
   })
   .catch(error => {
     console.error("Failed to process files:", error);

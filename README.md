@@ -24,7 +24,7 @@ Create a new file in your repo as `.github/workflows/main.yml` and add the follo
             token: ${{ secrets.GITHUB_TOKEN }}
         - name: Code review
             id: review_code
-            uses: intapass/intapass-action@0.1.3
+            uses: intapass/intapass-action@0.1.4
             with:
             files: ${{ steps.files.outputs.all }}
             token: ${{ secrets.INTAPASS_TOKEN }}

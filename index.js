@@ -3,6 +3,7 @@ const github = require('@actions/github');
 const axios = require('axios');
 const fs = require('fs').promises; // Use fs promises for easier async handling
 const path = require('path');
+const json2md = require("json2md")
 
 const languageMap = {
   '.py': 'Python',
@@ -26,9 +27,15 @@ function determineLanguage(filename) {
 }
 
 function requestReview(codeData, lang) {
-  const url = "https://backend-dev.portanex.com/review";
+  const url = "https://api.intapass.com/review";
   const payload = { code: codeData, lang: lang };
-  const config = { headers: { ContentType: "application/json" } };
+  const token = core.getInput('const')
+  const config = { 
+    headers: { 
+      ContentType: "application/json",
+      Token: token
+    } 
+  };
   return axios.post(url, payload, config);
 }
 
@@ -40,7 +47,7 @@ async function processFile(files) {
     try {
       const data = await fs.readFile(filePath, 'utf8');
       const resp = await requestReview(data, lang);
-      return JSON.stringify({file: fileItem, resp: resp.data}); // Convert response to string and return
+      return {file: fileItem, resp: resp.data};
     } catch (err) {
       console.error('Error processing file:', err);
       throw err; // Rethrow to be caught by Promise.all
@@ -54,7 +61,7 @@ async function processFile(files) {
 const files = JSON.parse(core.getInput('files'));
 processFile(files)
   .then(results => {
-    core.setOutput("results", results);
+    core.setOutput("results", json2md(results));
   })
   .catch(error => {
     console.error("Failed to process files:", error);

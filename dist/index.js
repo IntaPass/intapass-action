@@ -7986,6 +7986,444 @@ module.exports = function(dst, src) {
 
 /***/ }),
 
+/***/ 4701:
+/***/ ((module) => {
+
+"use strict";
+
+
+/**
+ * indento
+ * Indents the input string.
+ *
+ * @name indento
+ * @function
+ * @param {String} input The input string.
+ * @param {Number} width The indent width.
+ * @param {String} char The character to use for indentation (default: `" "`).
+ * @return {String} The indented string.
+ */
+function indento(input, width, char) {
+  char = typeof char !== "string" ? " " : char;
+  return String(input).replace(/^/gm, char.repeat(width));
+}
+
+module.exports = indento;
+
+/***/ }),
+
+/***/ 5791:
+/***/ ((module) => {
+
+"use strict";
+
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
+var converters = module.exports = {};
+
+var generateHeader = function generateHeader(repeat) {
+    return function (input, json2md) {
+        return "#".repeat(repeat) + " " + json2md(input);
+    };
+};
+
+var indent = function indent(content, spaces, ignoreFirst) {
+    var lines = content;
+
+    if (typeof content === "string") {
+        lines = content.split("\n");
+    }
+
+    if (ignoreFirst) {
+        if (lines.length <= 1) {
+            return lines.join("\n");
+        }
+        return lines[0] + "\n" + indent(lines.slice(1), spaces, false);
+    }
+
+    return lines.map(function (c) {
+        return " ".repeat(spaces) + c;
+    }).join("\n");
+};
+
+var parseTextFormat = function parseTextFormat(text) {
+
+    var formats = {
+        strong: "**",
+        italic: "*",
+        underline: "_",
+        strikethrough: "~~"
+    };
+
+    return text.replace(/<\/?strong\>/gi, formats.strong).replace(/<\/?bold\>/gi, formats.strong).replace(/<\/?em\>/gi, formats.italic).replace(/<\/?italic\>/gi, formats.italic).replace(/<\/?u\>/gi, formats.underline).replace(/<\/?strike\>/gi, formats.strikethrough);
+};
+
+// Headings
+converters.h1 = generateHeader(1);
+converters.h2 = generateHeader(2);
+converters.h3 = generateHeader(3);
+converters.h4 = generateHeader(4);
+converters.h5 = generateHeader(5);
+converters.h6 = generateHeader(6);
+
+converters.blockquote = function (input, json2md) {
+    return json2md(input, "> ");
+};
+
+converters.img = function (input, json2md) {
+
+    debugger;
+    if (Array.isArray(input)) {
+        return json2md(input, "", "img");
+    }
+    if (typeof input === "string") {
+        return converters.img({ source: input, title: "", alt: "" });
+    }
+    input.title = input.title || "";
+    input.alt = input.alt || "";
+    return "![" + input.alt + "](" + input.source + " \"" + input.title + "\")";
+};
+
+converters.ul = function (input, json2md) {
+    var c = "";
+    for (var i = 0; i < input.length; ++i) {
+        var marker = "";
+
+        var type = Object.keys(input[i])[0];
+        if (type !== "ul" && type !== "ol" && type !== 'taskLists') {
+            marker += "\n - ";
+        }
+
+        c += marker + parseTextFormat(indent(json2md(input[i]), 4, true));
+    }
+    return c;
+};
+
+converters.ol = function (input, json2md) {
+    var c = "";
+    var jumpCount = 0;
+    for (var i = 0; i < input.length; ++i) {
+        var marker = "";
+        var type = Object.keys(input[i])[0];
+        if (type !== "ul" && type !== "ol" && type !== 'taskLists') {
+            marker = "\n " + (i + 1 - jumpCount) + ". ";
+        } else {
+            jumpCount++;
+        }
+
+        c += marker + parseTextFormat(indent(json2md(input[i]), 4, true));
+    }
+    return c;
+};
+
+converters.taskLists = function (input, json2md) {
+    var c = "";
+    for (var i = 0; i < input.length; ++i) {
+        var marker = "";
+
+        var type = Object.keys(input[i])[0];
+        if (type !== "ul" && type !== "ol" && type !== 'taskLists') {
+            marker += input[i].isDone ? "\n - [x] " : "\n - [ ] ";
+        }
+
+        c += marker + parseTextFormat(indent(json2md(input[i].title || input[i]), 4, true));
+    }
+    return c;
+};
+
+converters.code = function (input, json2md) {
+    var c = "```" + (input.language || "") + "\n";
+    if (Array.isArray(input.content)) {
+        c += input.content.join("\n");
+    } else {
+        c += input.content;
+    }
+    c += "\n```";
+    return c;
+};
+
+converters.p = function (input, json2md) {
+    return parseTextFormat(json2md(input, "\n"));
+};
+
+converters.table = function (input, json2md) {
+    var _PREFERRED_LENGTH_PER;
+
+    var ALIGNMENT = {
+        CENTER: 'center',
+        RIGHT: 'right',
+        LEFT: 'left',
+        NONE: 'none'
+    };
+
+    var PREFERRED_LENGTH_PER_ALIGNMENT = (_PREFERRED_LENGTH_PER = {}, _defineProperty(_PREFERRED_LENGTH_PER, ALIGNMENT.CENTER, 3), _defineProperty(_PREFERRED_LENGTH_PER, ALIGNMENT.RIGHT, 2), _defineProperty(_PREFERRED_LENGTH_PER, ALIGNMENT.LEFT, 2), _defineProperty(_PREFERRED_LENGTH_PER, ALIGNMENT.NONE, 1), _PREFERRED_LENGTH_PER);
+
+    if ((typeof input === "undefined" ? "undefined" : _typeof(input)) !== "object" || !input.hasOwnProperty("headers") || !input.hasOwnProperty("rows")) {
+        return "";
+    }
+
+    var alignment = input.headers.map(function (_, index) {
+        return input.aligns && input.aligns[index] ? input.aligns[index] : ALIGNMENT.NONE;
+    });
+
+    // try to match the space the column name and the dashes (and colons) take up. Minimum depends on alignment
+    var preferred_lengths = input.headers.map(function (header, index) {
+        return Math.max(PREFERRED_LENGTH_PER_ALIGNMENT[alignment[index]], header.length - 2);
+    });
+
+    if (input.pretty === true) {
+        // update preferred_lengths considering rows' cells length
+        input.rows.forEach(function (row) {
+            (Array.isArray(row) ? row : input.headers.map(function (col_id) {
+                return row[col_id];
+            })).forEach(function (cell, index) {
+                preferred_lengths[index] = Math.max(preferred_lengths[index], cell.length - 2);
+            });
+        });
+    }
+
+    var fill_right = function fill_right(diff, header) {
+        return " ".repeat(diff) + header;
+    };
+    var fill_left = function fill_left(diff, header) {
+        return header + " ".repeat(diff);
+    };
+    var fill_center = function fill_center(diff, header) {
+        return " ".repeat(Math.floor(diff / 2)) + header + " ".repeat(Math.ceil(diff / 2));
+    };
+
+    var fill_th = function fill_th(header, index) {
+        var diff = preferred_lengths[index] + 2 - header.length;
+        switch (alignment[index]) {
+            case ALIGNMENT.RIGHT:
+                return fill_right(diff, header);
+            case ALIGNMENT.LEFT:
+                return fill_left(diff, header);
+            case ALIGNMENT.CENTER:
+            case ALIGNMENT.NONE:
+            default:
+                return fill_center(diff, header);
+        }
+    };
+
+    var fill_td = function fill_td(header, index) {
+        var diff = preferred_lengths[index] + 2 - header.length;
+        switch (alignment[index]) {
+            case ALIGNMENT.RIGHT:
+                return fill_right(diff, header);
+            case ALIGNMENT.NONE:
+            case ALIGNMENT.LEFT:
+                return fill_left(diff, header);
+            case ALIGNMENT.CENTER:
+            default:
+                return fill_center(diff, header);
+        }
+    };
+
+    // add spaces around column name if necessary (side(s) depends on alignment)
+    var column_names = input.headers.map(fill_th);
+
+    var header = "| " + column_names.join(" | ") + " |";
+
+    var spaces = "| " + input.headers.map(function (_, index) {
+        var inner = "-".repeat(preferred_lengths[index]);
+        switch (alignment[index]) {
+            case ALIGNMENT.CENTER:
+                return ":" + inner + ":";
+            case ALIGNMENT.RIGHT:
+                return "-" + inner + ":";
+            case ALIGNMENT.LEFT:
+                return ":" + inner + "-";
+            case ALIGNMENT.NONE:
+            default:
+                return "-" + inner + "-";
+        }
+    }).join(" | ") + " |";
+
+    var fill_tbody_cell = function fill_tbody_cell(cell, index) {
+        if (input.pretty !== true) return cell;
+        return fill_td(cell, index);
+    };
+
+    var data = input.rows.map(function (row) {
+        return "| " + (Array.isArray(row) ? row : input.headers.map(function (col_id) {
+            return row[col_id];
+        })).map(function (cell) {
+            return json2md(cell);
+        }).map(function (cell) {
+            return parseTextFormat(cell);
+        }).map(function (cell) {
+            return cell.replace(/([^\\])\|/, "$1\\|");
+        }).map(function (cell) {
+            return cell.trim();
+        }).map(fill_tbody_cell).join(" | ") + " |";
+    }).join("\n");
+
+    return [header, spaces, data].join("\n");
+};
+
+converters.link = function (input, json2md) {
+    if (Array.isArray(input)) {
+        return json2md(input, "", "link");
+    }
+    if (typeof input === "string") {
+        return converters.link({ source: input, title: "" });
+    }
+    return "[" + input.title + "](" + input.source + ")";
+};
+
+converters.hr = function (input, json2md) {
+    return '---';
+};
+
+/***/ }),
+
+/***/ 8631:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+var converters = __nccwpck_require__(5791),
+    indento = __nccwpck_require__(4701);
+
+/**
+ * json2md
+ * Converts a JSON input to markdown.
+ *
+ * **Supported elements**
+ *
+ * | Type         | Element            | Data                                                                                                                     | Example                                                                                                                                          |
+ * |--------------|--------------------|--------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------|
+ * | `h1`         | Heading 1          | The heading text as string.                                                                                              | `{ h1: "heading 1" }`                                                                                                                            |
+ * | `h2`         | Heading 2          | The heading text as string.                                                                                              | `{ h2: "heading 2" }`                                                                                                                            |
+ * | `h3`         | Heading 3          | The heading text as string.                                                                                              | `{ h3: "heading 3" }`                                                                                                                            |
+ * | `h4`         | Heading 4          | The heading text as string.                                                                                              | `{ h4: "heading 4" }`                                                                                                                            |
+ * | `h5`         | Heading 5          | The heading text as string.                                                                                              | `{ h5: "heading 5" }`                                                                                                                            |
+ * | `h6`         | Heading 6          | The heading text as string.                                                                                              | `{ h6: "heading 6" }`                                                                                                                            |
+ * | `p`          | Paragraphs         | The paragraph text as string or array (multiple paragraphs).                                                             | `{ p: "Hello World"}` or multiple paragraphs: `{ p: ["Hello", "World"] }`                                                                        |
+ * | `blockquote` | Blockquote         | The blockquote as string or array (multiple blockquotes)                                                                 | `{ blockquote: "Hello World"}` or multiple blockquotes: `{ blockquote: ["Hello", "World"] }`                                                     |
+ * | `img`        | Image              | An object or an array of objects containing the `title`, `source` and `alt`  fields.                                     | `{ img: { title: "My image title", source: "http://example.com/image.png", alt: "My image alt" } }`                                              |
+ * | `ul`         | Unordered list     | An array of strings or lists representing the items.                                                                     | `{ ul: ["item 1", "item 2"] }`                                                                                                                   |
+ * | `ol`         | Ordered list       | An array of strings or lists representing the items.                                                                     | `{ ol: ["item 1", "item 2"] }`                                                                                                                   |
+ * | `hr`         | Separator          | None                                                                                                                     | `{ hr: "" }`                                                                                                                                     |
+ * | `code`       | Code block element | An object containing the `language` (`String`) and `content` (`Array` or `String`)  fields.                              | `{ code: { "language": "html", "content": "<script src='dummy.js'></script>" } }`                                                                |
+ * | `table`      | Table              | An object containing the `headers` (`Array` of `String`s) and `rows` (`Array` of `Array`s or `Object`s).                 | `{ table: { headers: ["a", "b"], rows: [{ a: "col1", b: "col2" }] } }` or `{ table: { headers: ["a", "b"], rows: [["col1", "col2"]] } }`         |
+ * | `link`       | Link               | An object containing the `title` and the `source` fields.                                                                | `{ title: 'hello', source: 'https://ionicabizau.net' }`                                                                                          |
+ *
+ *
+ * You can extend the `json2md.converters` object to support your custom types.
+ *
+ * ```js
+ * json2md.converters.sayHello = function (input, json2md) {
+ *    return "Hello " + input + "!"
+ * }
+ * ```
+ *
+ * Then you can use it:
+ *
+ * ```js
+ * json2md({ sayHello: "World" })
+ * // => "Hello World!"
+ * ```
+ *
+ * @name json2md
+ * @function
+ * @param {Array|Object|String} data The input JSON data.
+ * @param {String} prefix A snippet to add before each line.
+ * @return {String} The generated markdown result.
+ */
+function json2md(data, prefix, _type) {
+    prefix = prefix || "";
+    if (typeof data === "string" || typeof data === "number") {
+        return indento(data, 1, prefix);
+    }
+
+    var content = [];
+
+    // Handle arrays
+    if (Array.isArray(data)) {
+        for (var i = 0; i < data.length; ++i) {
+            content.push(indento(json2md(data[i], "", _type), 1, prefix));
+        }
+        return content.join("\n");
+    } else if (_type) {
+        var mdText = "";
+        var func = converters[_type || type];
+        if (typeof func === "function") {
+            mdText += indento(func(_type ? data : data[type], json2md), 1, prefix) + "\n";
+        } else {
+            throw new Error("There is no such converter: " + type);
+        }
+        return mdText;
+    } else {
+        var _mdText = "";
+        Object.keys(data).forEach(function (type, index, array) {
+            var func = converters[_type || type];
+
+            if (typeof func === "function") {
+                _mdText += indento(func(_type ? data : data[type], json2md), 1, prefix) + "\n";
+            } else {
+                throw new Error("There is no such converter: " + type);
+            }
+        });
+        return _mdText;
+    }
+}
+
+/**
+ * @param {Array|Object|String} data The input JSON data.
+ * @param {String} prefix A snippet to add before each line.
+ * @return {Promise.<String, Error>} The generated markdown result.
+ */
+json2md.async = function (data, prefix, _type) {
+    return Promise.resolve().then(function () {
+        prefix = prefix || "";
+        if (typeof data === "string" || typeof data === "number") {
+            return indento(data, 1, prefix);
+        }
+
+        var content = [];
+
+        // Handle arrays
+        if (Array.isArray(data)) {
+            var promises = data.map(function (d, index) {
+                return Promise.resolve().then(function () {
+                    return json2md.async(d, "", _type);
+                }).then(function (result) {
+                    return indento(result, 1, prefix);
+                }).then(function (result) {
+                    content[index] = result;
+                });
+            });
+            return Promise.all(promises).then(function () {
+                return content.join("\n");
+            });
+        } else {
+            var _type2 = Object.keys(data)[0],
+                func = converters[_type || _type2];
+
+            if (typeof func === "function") {
+                return Promise.resolve().then(function () {
+                    return func(_type ? data : data[_type2], json2md);
+                }).then(function (result) {
+                    return indento(result, 1, prefix) + "\n";
+                });
+            }
+            throw new Error("There is no such converter: " + _type2);
+        }
+    });
+};
+
+json2md.converters = converters;
+
+module.exports = json2md;
+
+/***/ }),
+
 /***/ 5436:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
@@ -37577,6 +38015,7 @@ const github = __nccwpck_require__(3039);
 const axios = __nccwpck_require__(5162);
 const fs = (__nccwpck_require__(7147).promises); // Use fs promises for easier async handling
 const path = __nccwpck_require__(1017);
+const json2md = __nccwpck_require__(8631)
 
 const languageMap = {
   '.py': 'Python',
@@ -37600,9 +38039,15 @@ function determineLanguage(filename) {
 }
 
 function requestReview(codeData, lang) {
-  const url = "https://backend-dev.portanex.com/review";
+  const url = "https://api.intapass.com/review";
   const payload = { code: codeData, lang: lang };
-  const config = { headers: { ContentType: "application/json" } };
+  const token = core.getInput('const')
+  const config = { 
+    headers: { 
+      ContentType: "application/json",
+      Token: token
+    } 
+  };
   return axios.post(url, payload, config);
 }
 
@@ -37614,7 +38059,7 @@ async function processFile(files) {
     try {
       const data = await fs.readFile(filePath, 'utf8');
       const resp = await requestReview(data, lang);
-      return JSON.stringify({file: fileItem, resp: resp.data}); // Convert response to string and return
+      return {file: fileItem, resp: resp.data};
     } catch (err) {
       console.error('Error processing file:', err);
       throw err; // Rethrow to be caught by Promise.all
@@ -37628,7 +38073,7 @@ async function processFile(files) {
 const files = JSON.parse(core.getInput('files'));
 processFile(files)
   .then(results => {
-    core.setOutput("results", results);
+    core.setOutput("results", json2md(results));
   })
   .catch(error => {
     console.error("Failed to process files:", error);

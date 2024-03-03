@@ -6,6 +6,9 @@ inputs:
   files:  # id of input
     description: 'Files to review'
     required: true
+  token:
+    description: 'IntaPass authentication token'
+    required: true
 outputs:
   results: # id of output
     description: 'Here is the result of your output'

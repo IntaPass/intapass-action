@@ -1,7 +1,8 @@
 name: 'IntaPass Action'
 description: 'AI code review solution that helps you write better software'
-label: 'award'
-color: 'black'
+branding:
+  label: 'award'
+  color: 'black'
 inputs:
   files:  # id of input
     description: 'Files to review'

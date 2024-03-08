@@ -26,9 +26,9 @@ function determineLanguage(filename) {
   return language ? language : 'Unknown language';
 }
 
-function requestReview(codeData, lang) {
+function requestReview(codeData, lang, fileName) {
   const url = "https://api.intapass.com/review";
-  const payload = { code: codeData, lang: lang };
+  const payload = { code: codeData, lang: lang, file_name: fileName };
   const token = core.getInput('const')
   const config = { 
     headers: { 
@@ -46,7 +46,7 @@ async function processFile(files) {
 
     try {
       const data = await fs.readFile(filePath, 'utf8');
-      const resp = await requestReview(data, lang);
+      const resp = await requestReview(data, lang, fileItem);
       return {file: fileItem, resp: resp.data};
     } catch (err) {
       console.error('Error processing file:', err);
